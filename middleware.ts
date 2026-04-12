@@ -29,12 +29,26 @@ export async function middleware(request: NextRequest) {
 
   // If not logged in and trying to access dashboard, redirect to login
   if (!user && request.nextUrl.pathname === '/') {
-    return NextResponse.redirect(new URL('/login', request.url))
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    const redirectResponse = NextResponse.redirect(url)
+    // Copy cookies to redirect response
+    supabaseResponse.cookies.getAll().forEach(cookie => {
+      redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
+    })
+    return redirectResponse
   }
 
   // If logged in and trying to access login/signup, redirect to dashboard
   if (user && ['/login', '/signup'].includes(request.nextUrl.pathname)) {
-    return NextResponse.redirect(new URL('/', request.url))
+    const url = request.nextUrl.clone()
+    url.pathname = '/'
+    const redirectResponse = NextResponse.redirect(url)
+    // Copy cookies to redirect response
+    supabaseResponse.cookies.getAll().forEach(cookie => {
+      redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
+    })
+    return redirectResponse
   }
 
   return supabaseResponse

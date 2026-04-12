@@ -1,15 +1,14 @@
-"use client";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import { ClientHome } from "./client-home";
 
-import { useUser } from "@/lib/user-context";
-import { OnboardingFlow } from "@/components/onboarding";
-import { Dashboard } from "@/components/dashboard";
+export default async function Home() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-export default function Home() {
-  const { isOnboarded } = useUser();
-
-  if (!isOnboarded) {
-    return <OnboardingFlow />;
+  if (!user) {
+    redirect("/login");
   }
 
-  return <Dashboard />;
+  return <ClientHome />;
 }
