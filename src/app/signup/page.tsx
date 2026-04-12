@@ -58,9 +58,9 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-900">
       <div className="bg-white p-8 rounded-2xl shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold text-center mb-2">Create account 🥗</h1>
+        <h1 className="text-2xl font-bold text-center mb-2 text-black">Create account</h1>
         <p className="text-gray-500 text-center mb-6">Start your ProteinCoach journey</p>
 
         {error && (
