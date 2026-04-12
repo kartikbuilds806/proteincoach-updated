@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useUser } from "@/lib/user-context";
 import { UserProfile, calculateDailyProtein } from "@/lib/data";
+import { saveProfile } from "@/lib/profile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,8 +32,9 @@ const STEPS = [
 ];
 
 export function OnboardingFlow() {
-  const { setProfile } = useUser();
+  const { setProfile, userId } = useUser();
   const [step, setStep] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
   const [data, setData] = useState({
     name: "",
     age: "",
@@ -66,7 +68,8 @@ export function OnboardingFlow() {
     }
   };
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
+    setIsSaving(true);
     const profile: UserProfile = {
       name: data.name,
       age: parseInt(data.age),
@@ -81,7 +84,29 @@ export function OnboardingFlow() {
       proteinConsumedToday: 0,
     };
     profile.dailyProteinGoal = calculateDailyProtein(profile);
-    setProfile(profile);
+    
+    try {
+      if (userId) {
+        await saveProfile(userId, {
+          name: profile.name,
+          age: profile.age,
+          weight_kg: profile.weight,
+          target_weight_kg: profile.targetWeight,
+          height_cm: profile.height,
+          goal: profile.goal,
+          budget: profile.budget,
+          routine: profile.workoutRoutine,
+          protein_preference: profile.proteinPreference,
+          daily_protein_goal: profile.dailyProteinGoal
+        });
+      }
+      setProfile(profile);
+    } catch (error) {
+      console.error("Error saving profile", error);
+      alert("Failed to save your profile. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const goalOptions = [
@@ -403,9 +428,9 @@ export function OnboardingFlow() {
               <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
           ) : (
-            <Button onClick={handleFinish} disabled={!canNext()}>
-              Start My Journey
-              <Zap className="w-4 h-4 ml-1" />
+            <Button onClick={handleFinish} disabled={!canNext() || isSaving}>
+              {isSaving ? "Saving..." : "Start My Journey"}
+              {!isSaving && <Zap className="w-4 h-4 ml-1" />}
             </Button>
           )}
         </div>

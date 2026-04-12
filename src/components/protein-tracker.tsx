@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useUser } from "@/lib/user-context";
 import { getRecommendedRecipes } from "@/lib/data";
+import { addLog, getTodayTotal } from "@/lib/logs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,17 +19,52 @@ import {
 } from "lucide-react";
 
 export function ProteinTracker() {
-  const { profile, updateProteinConsumed, resetDailyProtein } = useUser();
+  const { profile, userId } = useUser();
   const [customAmount, setCustomAmount] = useState("");
+  const [localConsumed, setLocalConsumed] = useState(0);
+  const [isAdding, setIsAdding] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadLogs() {
+      if (!userId) return;
+      try {
+        const total = await getTodayTotal(userId);
+        if (mounted) setLocalConsumed(total);
+      } catch (err) {
+        console.error("Error loading total:", err);
+      }
+    }
+    loadLogs();
+    return () => { mounted = false; };
+  }, [userId]);
 
   if (!profile) return null;
 
+  const handleAddProtein = async (amount: number) => {
+    if (!userId || isAdding) return;
+    setIsAdding(true);
+    // Optimistic UI update
+    setLocalConsumed(prev => prev + amount);
+    try {
+      await addLog(userId, { protein_g: amount, food_name: 'Tracker Add', logged_at: new Date().toISOString() });
+      const actualTotal = await getTodayTotal(userId);
+      setLocalConsumed(actualTotal);
+    } catch (e) {
+      console.error("Failed to add log", e);
+      // Rollback
+      setLocalConsumed(prev => prev - amount);
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
   const progress = Math.min(
-    (profile.proteinConsumedToday / profile.dailyProteinGoal) * 100,
+    (localConsumed / profile.dailyProteinGoal) * 100,
     100
   );
   const remaining = Math.max(
-    profile.dailyProteinGoal - profile.proteinConsumedToday,
+    profile.dailyProteinGoal - localConsumed,
     0
   );
   const topRecipes = getRecommendedRecipes(profile).slice(0, 4);
@@ -51,7 +87,7 @@ export function ProteinTracker() {
           <CardContent className="px-4 py-0 text-center">
             <p className="text-xs text-muted-foreground">Consumed</p>
             <p className="text-2xl font-bold">
-              {profile.proteinConsumedToday}g
+              {localConsumed}g
             </p>
           </CardContent>
         </Card>
@@ -82,7 +118,7 @@ export function ProteinTracker() {
         <CardContent className="space-y-4">
           <div>
             <div className="flex justify-between text-sm mb-2">
-              <span>{profile.proteinConsumedToday}g consumed</span>
+              <span>{localConsumed}g consumed</span>
               <span>{profile.dailyProteinGoal}g goal</span>
             </div>
             <Progress value={progress} className="h-4" />
@@ -102,7 +138,8 @@ export function ProteinTracker() {
                   key={amount}
                   variant="outline"
                   size="sm"
-                  onClick={() => updateProteinConsumed(amount)}
+                  onClick={() => handleAddProtein(amount)}
+                  disabled={isAdding}
                 >
                   <Plus className="w-3 h-3 mr-1" />
                   {amount}g
@@ -123,16 +160,16 @@ export function ProteinTracker() {
             <Button
               onClick={() => {
                 if (customAmount && parseInt(customAmount) > 0) {
-                  updateProteinConsumed(parseInt(customAmount));
+                  handleAddProtein(parseInt(customAmount));
                   setCustomAmount("");
                 }
               }}
-              disabled={!customAmount || parseInt(customAmount) <= 0}
+              disabled={!customAmount || parseInt(customAmount) <= 0 || isAdding}
             >
               <Plus className="w-4 h-4 mr-1" />
               Add
             </Button>
-            <Button variant="outline" onClick={resetDailyProtein} title="Reset today">
+            <Button variant="outline" onClick={() => setLocalConsumed(0)} title="Reset today locally">
               <RotateCcw className="w-4 h-4" />
             </Button>
           </div>
