@@ -16,21 +16,73 @@ export async function getProfile(userId: string): Promise<ProfileRow | null> {
   return data as ProfileRow;
 }
 
+function mapProfileValues(data: any) {
+  const goalMap: Record<string, string> = {
+    bulking: 'build_muscle',
+    muscle: 'build_muscle', 
+    muscle_gain: 'build_muscle',
+    build_muscle: 'build_muscle',
+    losing: 'lose_fat',
+    lose_weight: 'lose_fat',
+    lose_fat: 'lose_fat',
+    weight_loss: 'lose_fat',
+    maintain: 'maintain',
+    stay_fit: 'maintain',
+    general_fitness: 'maintain',
+  };
+  
+  const budgetMap: Record<string, string> = {
+    low: 'low',
+    budget_friendly: 'low',
+    medium: 'medium',
+    moderate: 'medium',
+    high: 'high',
+    premium: 'high',
+  };
+  
+  const routineMap: Record<string, string> = {
+    beginner: 'light',
+    intermediate: 'moderate',
+    advanced: 'active',
+    sedentary: 'sedentary',
+    light: 'light',
+    moderate: 'moderate',
+    active: 'active',
+    very_active: 'very_active',
+  };
+  
+  const prefMap: Record<string, string> = {
+    both: 'both',
+    all: 'both',
+    all_categories: 'both',
+    veg: 'veg',
+    vegetarian: 'veg',
+    vegan: 'veg',
+    non_veg: 'non_veg',
+    non_vegetarian: 'non_veg',
+  };
+  
+  const result = { ...data };
+  if ('goal' in data && data.goal) {
+    result.goal = goalMap[data.goal.toLowerCase().replace(/[\s-]/g, '_')] || 'maintain';
+  }
+  if ('budget' in data && data.budget) {
+    result.budget = budgetMap[data.budget.toLowerCase().replace(/[\s-]/g, '_')] || 'medium';
+  }
+  if ('routine' in data && data.routine) {
+    result.routine = routineMap[data.routine.toLowerCase().replace(/[\s-]/g, '_')] || 'moderate';
+  }
+  if ('protein_preference' in data && data.protein_preference) {
+    result.protein_preference = prefMap[data.protein_preference.toLowerCase().replace(/[\s-]/g, '_')] || 'both';
+  }
+  
+  return result;
+}
+
 export async function saveProfile(userId: string, data: Partial<ProfileRow>): Promise<ProfileRow> {
   const supabase = createClient();
   
-  const payload = { ...data };
-  if (payload.goal) {
-    const g = payload.goal.toString().toLowerCase();
-    if (['bulking', 'muscle_gain', 'muscle'].includes(g)) {
-      payload.goal = 'build_muscle';
-    } else if (['losing', 'weight_loss', 'lose'].includes(g)) {
-      payload.goal = 'lose_fat';
-    } else {
-      // Catch "fit", "stay_fit", "maintain", and ANY other stray values
-      payload.goal = 'maintain';
-    }
-  }
+  const payload = mapProfileValues(data);
 
   const { data: updatedData, error } = await supabase
     .from('profiles')
