@@ -26,15 +26,17 @@ export async function middleware(request: NextRequest) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
+  const pathname = request.nextUrl.pathname
+  const isAuthRoute = pathname === '/login' || pathname === '/signup'
 
-  const isAuthRoute = ['/login', '/signup'].includes(request.nextUrl.pathname)
-
-  if (!user && !isAuthRoute && request.nextUrl.pathname === '/') {
+  // Not logged in + trying to access dashboard = redirect to login
+  if (!user && !isAuthRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
+  // Logged in + trying to access login/signup = redirect to dashboard
   if (user && isAuthRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/'
