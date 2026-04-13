@@ -52,14 +52,15 @@ function mapProfileValues(data: any) {
   };
   
   const prefMap: Record<string, string> = {
-    both: 'both',
-    all: 'both',
-    all_categories: 'both',
+    both: 'all',
+    all: 'all',
+    all_categories: 'all',
     veg: 'veg',
     vegetarian: 'veg',
-    vegan: 'veg',
-    non_veg: 'non_veg',
-    non_vegetarian: 'non_veg',
+    vegan: 'vegan',
+    non_veg: 'non-veg',
+    'non-veg': 'non-veg',
+    non_vegetarian: 'non-veg',
   };
   
   const result = { ...data };
@@ -73,7 +74,7 @@ function mapProfileValues(data: any) {
     result.routine = routineMap[data.routine.toLowerCase().replace(/[\s-]/g, '_')] || 'moderate';
   }
   if ('protein_preference' in data && data.protein_preference) {
-    result.protein_preference = prefMap[data.protein_preference.toLowerCase().replace(/[\s-]/g, '_')] || 'both';
+    result.protein_preference = prefMap[data.protein_preference.toLowerCase().replace(/[\s-]/g, '_')] || 'all';
   }
   
   return result;
