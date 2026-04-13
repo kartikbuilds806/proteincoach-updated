@@ -26,7 +26,8 @@ export async function saveProfile(userId: string, data: Partial<ProfileRow>): Pr
       payload.goal = 'build_muscle';
     } else if (['losing', 'weight_loss', 'lose'].includes(g)) {
       payload.goal = 'lose_fat';
-    } else if (['maintain', 'stay_fit', 'general_fitness'].includes(g)) {
+    } else {
+      // Catch "fit", "stay_fit", "maintain", and ANY other stray values
       payload.goal = 'maintain';
     }
   }
