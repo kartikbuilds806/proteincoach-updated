@@ -27,28 +27,18 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  // If not logged in and trying to access dashboard, redirect to login
-  if (!user && request.nextUrl.pathname === '/') {
+  const isAuthRoute = ['/login', '/signup'].includes(request.nextUrl.pathname)
+
+  if (!user && !isAuthRoute && request.nextUrl.pathname === '/') {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
-    const redirectResponse = NextResponse.redirect(url)
-    // Copy cookies to redirect response
-    supabaseResponse.cookies.getAll().forEach(cookie => {
-      redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
-    })
-    return redirectResponse
+    return NextResponse.redirect(url)
   }
 
-  // If logged in and trying to access login/signup, redirect to dashboard
-  if (user && ['/login', '/signup'].includes(request.nextUrl.pathname)) {
+  if (user && isAuthRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/'
-    const redirectResponse = NextResponse.redirect(url)
-    // Copy cookies to redirect response
-    supabaseResponse.cookies.getAll().forEach(cookie => {
-      redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
-    })
-    return redirectResponse
+    return NextResponse.redirect(url)
   }
 
   return supabaseResponse

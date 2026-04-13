@@ -101,9 +101,9 @@ export function OnboardingFlow() {
         });
       }
       setProfile(profile);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving profile", error);
-      alert("Failed to save your profile. Please try again.");
+      alert(`Failed to save your profile: ${error?.message || error}. Please check Supabase RLS policies.`);
     } finally {
       setIsSaving(false);
     }

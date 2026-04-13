@@ -16,16 +16,19 @@ export async function getProfile(userId: string): Promise<ProfileRow | null> {
   return data as ProfileRow;
 }
 
-export async function saveProfile(userId: string, profileData: Partial<ProfileRow>): Promise<ProfileRow> {
+export async function saveProfile(userId: string, data: Partial<ProfileRow>): Promise<ProfileRow> {
   const supabase = createClient();
-  const { data, error } = await supabase
+  const { data: updatedData, error } = await supabase
     .from('profiles')
-    .upsert({ id: userId, ...profileData })
+    .upsert({ id: userId, ...data })
     .select()
     .single();
     
-  if (error) throw error;
-  return data as ProfileRow;
+  if (error) {
+    console.error('Supabase error:', error.message, error.details);
+    throw new Error(error.message);
+  }
+  return updatedData as ProfileRow;
 }
 
 export async function hasCompletedOnboarding(userId: string): Promise<boolean> {
@@ -33,8 +36,8 @@ export async function hasCompletedOnboarding(userId: string): Promise<boolean> {
     const profile = await getProfile(userId);
     if (!profile) return false;
     
-    // Check if core fields exist
-    return !!(profile.age && profile.weight_kg && profile.height_cm && profile.goal);
+    // returns true if profile has name and goal
+    return !!(profile.name && profile.goal);
   } catch (error) {
     console.error("Error checking onboarding status:", error);
     return false;

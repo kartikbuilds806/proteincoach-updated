@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { ClientHome } from "./client-home";
+import { UserProvider } from "@/lib/user-context";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -10,5 +10,7 @@ export default async function Home() {
     redirect("/login");
   }
 
-  return <ClientHome />;
+  // The UserProvider mounts and fetches the profile. 
+  // It conditionally renders OnboardingFlow or Dashboard based on the fetched profile completeness.
+  return <UserProvider />;
 }
