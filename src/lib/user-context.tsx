@@ -9,6 +9,7 @@ import { Dashboard } from "@/components/dashboard";
 
 interface UserContextType {
   user: any;
+  userId: string | undefined;
   profile: UserProfile | null;
   setProfile: (profile: UserProfile) => void;
   updateProteinConsumed: (amount: number) => void;
@@ -93,6 +94,7 @@ export function UserProvider({ children }: { children?: React.ReactNode }) {
 
   const value = {
     user,
+    userId: user?.id,
     profile,
     setProfile,
     updateProteinConsumed,
