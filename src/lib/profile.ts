@@ -18,9 +18,22 @@ export async function getProfile(userId: string): Promise<ProfileRow | null> {
 
 export async function saveProfile(userId: string, data: Partial<ProfileRow>): Promise<ProfileRow> {
   const supabase = createClient();
+  
+  const payload = { ...data };
+  if (payload.goal) {
+    const g = payload.goal.toString().toLowerCase();
+    if (['bulking', 'muscle_gain', 'muscle'].includes(g)) {
+      payload.goal = 'build_muscle';
+    } else if (['losing', 'weight_loss', 'lose'].includes(g)) {
+      payload.goal = 'lose_fat';
+    } else if (['maintain', 'stay_fit', 'general_fitness'].includes(g)) {
+      payload.goal = 'maintain';
+    }
+  }
+
   const { data: updatedData, error } = await supabase
     .from('profiles')
-    .upsert({ id: userId, ...data })
+    .upsert({ id: userId, ...payload })
     .select()
     .single();
     
